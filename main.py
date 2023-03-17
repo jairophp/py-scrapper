@@ -14,11 +14,14 @@ from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 import lxml
+import argparse
 
-# Aviso de Progresso
-time.sleep(2)
-print("Bibliotecas carregadas.")
-time.sleep(2)
+##########################################################################################################################
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-i", "--inicio")
+parser.add_argument("-f", "--fim")
+args = parser.parse_args()
 
 ##########################################################################################################################
 
@@ -128,13 +131,13 @@ def obter_numero_penultima_pagina(driver):
 
 # Mensagem de progresso
 print("Funções carregadas com sucesso.")
-time.sleep(2)
+time.sleep(0.5)
 
 ##########################################################################################################################
 
 # Marcando o início
 print("Iniciando a extração de dados do ChatGURU.")
-time.sleep(5)
+time.sleep(0.5)
 
 # Inicialize o webdriver do navegador de sua escolha
 driver = webdriver.Chrome(ChromeDriverManager().install())
@@ -159,19 +162,19 @@ driver.implicitly_wait(10)
 
 # Mensagem de progresso
 print("Login efetuado com sucesso.")
-time.sleep(2)
+time.sleep(0.5)
 
 # Navegar para a página
 driver.get('https://s17.chatguru.app/reports/messages')
-time.sleep(3)
+time.sleep(0.5)
 print("Página de Relatório de Mensagens carregada com sucesso.")
-time.sleep(3)
+time.sleep(0.5)
 
 ##########################################################################################################################
 
 ### Essa parte precisará de algum nível de interação ###
 print("Nessa parte, você precisará selecionar o período de tempo para fazer a extração de dados")
-time.sleep(2)
+time.sleep(0.5)
 
 # Selecionar a opção "Recebida"
 select_element = Select(driver.find_element_by_id('is_out'))
@@ -179,16 +182,14 @@ select_element.select_by_value('False')
 direcao_escolhida = select_element.first_selected_option.text
 
 ## Selecionar data inicial
-time.sleep(2)
 print("ATENÇÃO: JANELA DE TEMPO NÃO PODE SER SUPERIOR À 90 DIAS DE ACORDO COM O SITE!!!")
-time.sleep(4)
 print("Ou seja, intervalo de tempo de no máximo 3 meses por consulta")
-time.sleep(4)
 data_criacao = driver.find_element_by_id("created_from")
 # Limpa o campo input
 data_criacao.clear()
 # Solicita que o usuário insira uma data
-nova_data = input("Insira uma nova data final (formato YYYY-MM-DD): ")
+# nova_data = input("Insira uma nova data final (formato YYYY-MM-DD): ")
+nova_data = args.inicio
 # Insere a nova data no campo input
 data_criacao.send_keys(nova_data)
 # Atualiza a propriedade value do campo com a nova data
@@ -199,7 +200,8 @@ data_final = driver.find_element_by_id("created_to")
 # Limpa o campo input
 data_final.clear()
 # Solicita que o usuário insira uma data
-nova_data_final = input("Insira uma nova data final (formato YYYY-MM-DD): ")
+# nova_data_final = input("Insira uma nova data final (formato YYYY-MM-DD): ")
+nova_data_final = args.fim
 # Insere a nova data no campo input
 data_final.send_keys(nova_data_final)
 # Atualiza a propriedade value do campo com a nova data
@@ -212,13 +214,13 @@ time.sleep(5)
 # Apertar o botão "Ver Relatório"
 ver_relatorio_btn = driver.find_element_by_class_name('messages_reports_submit')
 ver_relatorio_btn.click()
-time.sleep(5)
+time.sleep(2)
 html = driver.page_source
 soup = BeautifulSoup(html, 'html.parser')
 #soup
 
 # Esperar um tempo para não bugar a página
-time.sleep(5)
+time.sleep(2)
 
 # Aviso de Progresso
 print("Tudo pronto, por favor aguarde.")
@@ -238,23 +240,23 @@ df_total_parte_1 = pd.DataFrame()
 # Saber última página do site, que será usada para o contador do loop
 ultima_pagina = obter_numero_penultima_pagina(driver)
 print("O loop precisa ir até a página: " + str(ultima_pagina))
-time.sleep(5)
+time.sleep(2)
 
 # Inicia o scraping da página 1
 df_pagina1 = filtrar_dados(soup)
 print("O DF da página #1 está concluído.")
-time.sleep(3)
+time.sleep(1)
 
 # Adiciona os dados da página 1 ao DataFrame total
 df_total_parte_1 = pd.concat([df_total_parte_1, df_pagina1])
 print("O DF da página #1 está no DF geral.")
-time.sleep(3)
+time.sleep(1)
 
 # Iniciar o loop, para pegar os dados das páginas de 1 a 4
 num_pagina = 1
 
 # Tempo de espera, para evitar possíveis bugs no armazenamento do DataFrame da página 1
-time.sleep(7)
+time.sleep(3)
 
 # Variável de tentativas
 tentativas = 0
@@ -267,30 +269,30 @@ while num_pagina <= ultima_pagina:
         botao = driver.find_element_by_css_selector("i.fa.fa-chevron-right")
         botao.click()
         # Aguardar para evitar bug
-        time.sleep(3)
+        time.sleep(1)
         num_pagina += 1
         print("Página atual: " + str(num_pagina))
         if num_pagina > ultima_pagina:
             break
-        time.sleep(2)
+        time.sleep(1)
         html = driver.page_source
         soup = BeautifulSoup(html, 'html.parser')
         print("Registrado nova entrada para a variável soup, página :" + str(num_pagina))
-        time.sleep(2)
+        time.sleep(1)
     except NoSuchElementException:
-        print("Botão não encontrado. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        print("Botão não encontrado. Tentando novamente em 1 segundo...")
+        time.sleep(1)
         tentativas += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas))
-        time.sleep(3)
+        time.sleep(1)
         if num_pagina >= ultima_pagina:
             break
     except:
-        print("Erro ao clicar no botão. Tentando novamente em 3 segundos...")
-        time.sleep(10)
+        print("Erro ao clicar no botão. Tentando novamente em 2 segundos...")
+        time.sleep(2)
         tentativas += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas))
-        time.sleep(5)
+        time.sleep(2)
         if num_pagina >= ultima_pagina:
             break
         
@@ -298,30 +300,30 @@ while num_pagina <= ultima_pagina:
         # Extrair os dados da página atual e adicionar ao DataFrame total
         df_proxima_pagina = filtrar_dados(soup)
         df_total_parte_1 = pd.concat([df_total_parte_1, df_proxima_pagina])
-        time.sleep(3)
+        time.sleep(1)
         print("Tudo ok, indo para a próxima página.") 
     except NoSuchElementException:
         print("Elemento no scraping não encontrado. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        time.sleep(1)
         tentativas_apos_botao += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas_apos_botao))
-        time.sleep(3)
+        time.sleep(1)
     except:
         print("Erro no scraping. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        time.sleep(1)
 
 print("Chegamos no final do loop")
 # Criação e organização do DataFrame final
 df_total_parte_1 = df_total_parte_1.reset_index(drop=True)
 df_total_parte_1 = df_total_parte_1.iloc[::-1].reset_index(drop=True)
-time.sleep(2)
-time.sleep(2)
+time.sleep(0.5)
+time.sleep(0.5)
 
 ##########################################################################################################################
 
 # Indo para a parte 2
 print("Iniciando parte 2, fazendo a extração das mensagens Enviadas")
-time.sleep(2)
+time.sleep(1)
 
 ##########################################################################################################################
 
@@ -354,22 +356,22 @@ driver.execute_script("arguments[0].value = arguments[1]", data_final, nova_data
 print("Por favor, aguarde.")
 
 # Tempo de espera para evitar bugar a página
-time.sleep(5)
+time.sleep(2)
 
 # Apertar o botão "Ver Relatório"
 ver_relatorio_btn = driver.find_element_by_class_name('messages_reports_submit')
 ver_relatorio_btn.click()
-time.sleep(5)
+time.sleep(2)
 html = driver.page_source
 soup = BeautifulSoup(html, 'html.parser')
 #soup
 
 # Esperar um tempo para não bugar a página
-time.sleep(5)
+time.sleep(2)
 
 # Aviso de Progresso
 print("Tudo pronto, por favor aguarde.")
-time.sleep(2)
+time.sleep(1)
 
 ##########################################################################################################################
 
@@ -385,23 +387,23 @@ df_total_parte_2 = pd.DataFrame()
 # Saber última página do site, que será usada para o contador do loop
 ultima_pagina = obter_numero_penultima_pagina(driver)
 print("O loop precisa ir até a página: " + str(ultima_pagina))
-time.sleep(5)
+time.sleep(1)
 
 # Inicia o scraping da página 1
 df_pagina1 = filtrar_dados(soup)
 print("O DF da página #1 está concluído.")
-time.sleep(3)
+time.sleep(1)
 
 # Adiciona os dados da página 1 ao DataFrame total
 df_total_parte_2 = pd.concat([df_total_parte_2, df_pagina1])
 print("O DF da página #1 está no DF geral.")
-time.sleep(3)
+time.sleep(1)
 
 # Iniciar o loop, para pegar os dados das páginas de 1 a 4
 num_pagina = 1
 
 # Tempo de espera, para evitar possíveis bugs no armazenamento do DataFrame da página 1
-time.sleep(7)
+time.sleep(2)
 
 # Variável de tentativas
 #tentativas = 0
@@ -414,30 +416,30 @@ while num_pagina <= ultima_pagina:
         botao = driver.find_element_by_css_selector("i.fa.fa-chevron-right")
         botao.click()
         # Aguardar para evitar bug
-        time.sleep(3)
+        time.sleep(1)
         num_pagina += 1
         print("Página atual: " + str(num_pagina))
         if num_pagina > ultima_pagina:
             break
-        time.sleep(2)
+        time.sleep(1)
         html = driver.page_source
         soup = BeautifulSoup(html, 'html.parser')
         print("Registrado nova entrada para a variável soup, página :" + str(num_pagina))
-        time.sleep(2)
+        time.sleep(1)
     except NoSuchElementException:
         print("Botão não encontrado. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        time.sleep(1)
         tentativas += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas))
-        time.sleep(3)
+        time.sleep(1)
         if num_pagina >= ultima_pagina:
             break
     except:
         print("Erro ao clicar no botão. Tentando novamente em 3 segundos...")
-        time.sleep(10)
+        time.sleep(2)
         tentativas += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas))
-        time.sleep(5)
+        time.sleep(1)
         if num_pagina >= ultima_pagina:
             break
         
@@ -445,23 +447,23 @@ while num_pagina <= ultima_pagina:
         # Extrair os dados da página atual e adicionar ao DataFrame total
         df_proxima_pagina = filtrar_dados(soup)
         df_total_parte_2 = pd.concat([df_total_parte_2, df_proxima_pagina])
-        time.sleep(3)
+        time.sleep(1)
         print("Tudo ok, indo para a próxima página.")
     except NoSuchElementException:
         print("Elemento no scraping não encontrado. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        time.sleep(1)
         tentativas_apos_botao += 1 # Aumentar a contagem de tentativas
         print("Total de tentativas: " + str(tentativas_apos_botao))
-        time.sleep(3)
+        time.sleep(1)
     except:
         print("Erro no scraping. Tentando novamente em 3 segundos...")
-        time.sleep(3)
+        time.sleep(1)
 
 print("Chegamos no final do loop")
 # Criação e organização do DataFrame final
 df_total_parte_2 = df_total_parte_2.reset_index(drop=True)
 df_total_parte_2 = df_total_parte_2.iloc[::-1].reset_index(drop=True)
-time.sleep(2)
+time.sleep(0.5)
 
 ##########################################################################################################################
 
@@ -477,17 +479,13 @@ df_total.insert(0, 'ID', range(1, 1 + len(df_total)))
 
 ## Criação de arquivo em CSV para download e posterior anexo ao banco de dados
 # Solicita que o usuário insira o nome do arquivo
-time.sleep(3)
-nome_arquivo = input("Insira o nome do arquivo CSV: (por exemplo, CHATGURU_JAN_23")
+# nome_arquivo = input("Insira o nome do arquivo CSV: (por exemplo, CHATGURU_JAN_23")
+nome_arquivo = "csv-" + args.inicio + "-" + args.fim
 # Salva o arquivo CSV com o nome inserido pelo usuário
 df_total.to_csv(nome_arquivo + ".csv", index=False)
 
 ##########################################################################################################################
 
 # Finalizando a aplicação
-time.sleep(2)
 print("O arquivo " + nome_arquivo + ".csv " + "foi gerado, favor conferir o download.")
-time.sleep(3)
-print("A aplicação será finalizada em aproximadamente 5 segundos.")
-time.sleep(8)
 driver.close()
